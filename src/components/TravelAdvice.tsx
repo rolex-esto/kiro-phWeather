@@ -1,6 +1,3 @@
-import { useEffect, useState } from 'react';
-import { useDuckDB } from '../hooks/useDuckDB';
-import { convertBigInts } from '../utils/query-helpers';
 import {
   CheckCircleIcon,
   AlertCircleIcon,
@@ -12,29 +9,21 @@ import {
   CloudRainIcon,
 } from './Icons';
 import { getRegionLabel } from '../utils/regions';
+import type { HourlyData } from '../hooks/useWeatherData';
 import './TravelAdvice.css';
 
-interface DayStats {
-  avg_prob: number;
-  max_prob: number;
-  total_rain: number;
-  avg_temp: number;
-  avg_humidity: number;
-  avg_wind: number;
-}
-
 interface Props {
+  hourly: HourlyData[];
   region: string;
-  date: string;
 }
 
-function getAdvice(stats: DayStats) {
-  if (stats.avg_prob >= 70) {
+function getAdvice(avgProb: number) {
+  if (avgProb >= 70) {
     return {
       verdict: 'Not a good day to go out',
       Icon: CloudLightningIcon,
       color: '#c62828',
-      bg: '#fef2f2',
+      bg: 'var(--danger-light)',
       tips: [
         'Heavy rain expected - stay indoors if possible',
         'If you must travel, bring heavy rain gear',
@@ -43,12 +32,12 @@ function getAdvice(stats: DayStats) {
       ],
     };
   }
-  if (stats.avg_prob >= 50) {
+  if (avgProb >= 50) {
     return {
       verdict: 'Bring your umbrella!',
       Icon: UmbrellaIcon,
       color: '#e65100',
-      bg: '#fff8e1',
+      bg: 'var(--warning-light)',
       tips: [
         'Rain is likely, especially in the afternoon',
         'Pack a waterproof bag for electronics',
@@ -57,12 +46,12 @@ function getAdvice(stats: DayStats) {
       ],
     };
   }
-  if (stats.avg_prob >= 30) {
+  if (avgProb >= 30) {
     return {
       verdict: 'Might rain - be prepared',
       Icon: AlertCircleIcon,
       color: '#f57c00',
-      bg: '#fff3e0',
+      bg: 'var(--warning-light)',
       tips: [
         'Light showers are possible',
         'Keep a small umbrella in your bag',
@@ -75,7 +64,7 @@ function getAdvice(stats: DayStats) {
     verdict: 'Great day to go out!',
     Icon: CheckCircleIcon,
     color: '#2e7d32',
-    bg: '#f1f8e9',
+    bg: 'var(--success-light)',
     tips: [
       'Low chance of rain - enjoy your day!',
       'Don\'t forget sunscreen if outdoors',
@@ -85,29 +74,16 @@ function getAdvice(stats: DayStats) {
   };
 }
 
-export function TravelAdvice({ region, date }: Props) {
-  const { query } = useDuckDB();
-  const [stats, setStats] = useState<DayStats | null>(null);
+export function TravelAdvice({ hourly, region }: Props) {
+  if (hourly.length === 0) return null;
 
-  useEffect(() => {
-    query<DayStats>(`
-      SELECT
-        ROUND(AVG(rain_probability), 0) as avg_prob,
-        MAX(rain_probability) as max_prob,
-        ROUND(SUM(rainfall_mm), 1) as total_rain,
-        ROUND(AVG(temperature), 1) as avg_temp,
-        ROUND(AVG(humidity), 0) as avg_humidity,
-        ROUND(AVG(wind_speed), 1) as avg_wind
-      FROM weather
-      WHERE region = '${region}' AND date = '${date}'
-    `).then((rows) => {
-      if (rows.length > 0) setStats(convertBigInts(rows)[0]);
-    });
-  }, [query, region, date]);
+  const avgProb = Math.round(hourly.reduce((s, h) => s + h.precipitation_probability, 0) / hourly.length);
+  const avgTemp = Math.round((hourly.reduce((s, h) => s + h.temperature, 0) / hourly.length) * 10) / 10;
+  const avgHumidity = Math.round(hourly.reduce((s, h) => s + h.humidity, 0) / hourly.length);
+  const avgWind = Math.round((hourly.reduce((s, h) => s + h.wind_speed, 0) / hourly.length) * 10) / 10;
+  const totalRain = Math.round(hourly.reduce((s, h) => s + h.precipitation, 0) * 10) / 10;
 
-  if (!stats) return null;
-
-  const advice = getAdvice(stats);
+  const advice = getAdvice(avgProb);
   const AdviceIcon = advice.Icon;
 
   return (
@@ -127,22 +103,22 @@ export function TravelAdvice({ region, date }: Props) {
       <div className="advice-stats">
         <div className="stat">
           <ThermometerIcon size={18} color="#e65100" />
-          <span className="stat-value">{stats.avg_temp}{'\u00B0'}C</span>
+          <span className="stat-value">{avgTemp}{'\u00B0'}C</span>
           <span className="stat-label">Temp</span>
         </div>
         <div className="stat">
           <DropletIcon size={18} color="#1565c0" />
-          <span className="stat-value">{stats.avg_humidity}%</span>
+          <span className="stat-value">{avgHumidity}%</span>
           <span className="stat-label">Humidity</span>
         </div>
         <div className="stat">
           <WindIcon size={18} color="#546e7a" />
-          <span className="stat-value">{stats.avg_wind}</span>
+          <span className="stat-value">{avgWind}</span>
           <span className="stat-label">Wind km/h</span>
         </div>
         <div className="stat">
           <CloudRainIcon size={18} color="#1976d2" />
-          <span className="stat-value">{stats.total_rain}</span>
+          <span className="stat-value">{totalRain}</span>
           <span className="stat-label">Rain mm</span>
         </div>
       </div>

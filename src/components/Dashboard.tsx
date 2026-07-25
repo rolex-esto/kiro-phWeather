@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useDuckDB } from '../hooks/useDuckDB';
+import { useWeatherData } from '../hooks/useWeatherData';
 import { useFavorites } from '../hooks/useFavorites';
 import { PhilippineMap } from './PhilippineMap';
 import { RegionSearch } from './RegionSearch';
@@ -9,7 +9,7 @@ import { BestTimeToGo } from './BestTimeToGo';
 import { DayCards } from './DayCards';
 import { HourlyTimeline } from './HourlyTimeline';
 import { TravelAdvice } from './TravelAdvice';
-import { RainProbabilityChart } from './RainProbabilityChart';
+import { RainChart } from './RainChart';
 import { CompareRegions } from './CompareRegions';
 import { StarButton } from './StarButton';
 import { CalendarIcon, ClockIcon, TrendingUpIcon, SunIcon } from './Icons';
@@ -24,19 +24,19 @@ const ALL_REGIONS = [
 ];
 
 export function Dashboard() {
-  const { loading, error } = useDuckDB();
-  const { favorites, toggleFavorite, removeFavorite, isFavorite } = useFavorites();
   const [selectedRegion, setSelectedRegion] = useState('NCR');
-  const [selectedDate, setSelectedDate] = useState('2026-07-25');
+  const [selectedDate, setSelectedDate] = useState(() => new Date().toISOString().split('T')[0]);
   const [compareMode, setCompareMode] = useState(false);
   const [compareRegion, setCompareRegion] = useState('Bicol');
+  const { favorites, toggleFavorite, removeFavorite, isFavorite } = useFavorites();
+  const { loading, error, hourly, daily, lastUpdated, refetch } = useWeatherData(selectedRegion);
 
   if (loading) {
     return (
       <div className="loading-state">
         <div className="spinner" aria-label="Loading" />
-        <p>Getting weather data ready...</p>
-        <span className="loading-sub">This only takes a moment</span>
+        <p>Fetching live weather data...</p>
+        <span className="loading-sub">Getting forecast from Open-Meteo</span>
       </div>
     );
   }
@@ -44,15 +44,14 @@ export function Dashboard() {
   if (error) {
     return (
       <div className="error-state">
-        <p>Something went wrong</p>
+        <p>Could not load weather data</p>
         <span className="error-detail">{error}</span>
-        <button className="retry-btn" onClick={() => window.location.reload()}>
-          Try Again
-        </button>
+        <button className="retry-btn" onClick={refetch}>Try Again</button>
       </div>
     );
   }
 
+  const todayHourly = hourly.filter((h) => h.date === selectedDate);
   const dateLabel = new Date(selectedDate + 'T00:00:00').toLocaleDateString('en-PH', {
     weekday: 'long',
     month: 'long',
@@ -61,10 +60,8 @@ export function Dashboard() {
 
   return (
     <div className="dashboard">
-      {/* Typhoon season alert */}
       <TyphoonBanner />
 
-      {/* Search bar + favorites */}
       <div className="dashboard-search">
         <RegionSearch selected={selectedRegion} onSelect={setSelectedRegion} />
       </div>
@@ -79,17 +76,12 @@ export function Dashboard() {
       )}
 
       <div className="dashboard-layout">
-        {/* Left: Map */}
         <aside className="dashboard-sidebar">
-          <PhilippineMap
-            selected={selectedRegion}
-            onSelect={setSelectedRegion}
-          />
+          <PhilippineMap selected={selectedRegion} onSelect={setSelectedRegion} />
         </aside>
 
-        {/* Right: Forecast content */}
         <section className="dashboard-content">
-          {/* Region header with star + compare button */}
+          {/* Actions */}
           <div className="region-actions">
             <StarButton
               isFavorite={isFavorite(selectedRegion)}
@@ -105,6 +97,9 @@ export function Dashboard() {
               </svg>
               Compare
             </button>
+            {lastUpdated && (
+              <span className="last-updated">Updated: {lastUpdated}</span>
+            )}
           </div>
 
           {/* Compare mode */}
@@ -132,7 +127,7 @@ export function Dashboard() {
           )}
 
           {/* Travel advice */}
-          <TravelAdvice region={selectedRegion} date={selectedDate} />
+          <TravelAdvice hourly={todayHourly} region={selectedRegion} />
 
           {/* Best time to go */}
           <div className="section-card">
@@ -141,7 +136,7 @@ export function Dashboard() {
               <h2 className="section-title">Best Time to Go</h2>
             </div>
             <p className="section-desc">Driest and rainiest 3-hour windows today</p>
-            <BestTimeToGo region={selectedRegion} date={selectedDate} />
+            <BestTimeToGo hourly={todayHourly} />
           </div>
 
           {/* Day selector */}
@@ -152,7 +147,7 @@ export function Dashboard() {
             </div>
             <p className="section-desc">Tap a day to see hourly breakdown</p>
             <DayCards
-              region={selectedRegion}
+              daily={daily}
               selectedDate={selectedDate}
               onSelectDate={setSelectedDate}
             />
@@ -165,7 +160,7 @@ export function Dashboard() {
               <h2 className="section-title">Hour by Hour</h2>
             </div>
             <p className="section-desc">{dateLabel} - scroll to see when rain hits</p>
-            <HourlyTimeline region={selectedRegion} date={selectedDate} />
+            <HourlyTimeline hourly={todayHourly} />
           </div>
 
           {/* Weekly trend chart */}
@@ -174,8 +169,8 @@ export function Dashboard() {
               <TrendingUpIcon size={18} color="var(--accent)" />
               <h2 className="section-title">Weekly Rain Trend</h2>
             </div>
-            <p className="section-desc">Average rain probability for {getRegionLabel(selectedRegion)}</p>
-            <RainProbabilityChart region={selectedRegion} />
+            <p className="section-desc">{getRegionLabel(selectedRegion)}</p>
+            <RainChart daily={daily} />
           </div>
         </section>
       </div>

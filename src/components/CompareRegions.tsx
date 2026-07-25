@@ -1,6 +1,4 @@
 import { useEffect, useState } from 'react';
-import { useDuckDB } from '../hooks/useDuckDB';
-import { convertBigInts } from '../utils/query-helpers';
 import { CloudRainIcon, ThermometerIcon, DropletIcon, WindIcon, CheckCircleIcon, HandshakeIcon } from './Icons';
 import './CompareRegions.css';
 
@@ -9,9 +7,7 @@ interface RegionStats {
   avg_prob: number;
   total_rain: number;
   avg_temp: number;
-  avg_humidity: number;
   avg_wind: number;
-  rainy_hours: number;
 }
 
 interface Props {
@@ -21,45 +17,65 @@ interface Props {
   onClose: () => void;
 }
 
-function getVerdict(a: RegionStats, b: RegionStats): { winner: string; reason: string } {
-  if (a.avg_prob < b.avg_prob - 10) {
-    return { winner: a.region, reason: `${a.avg_prob}% vs ${b.avg_prob}% rain chance - much drier` };
+const REGION_COORDS: Record<string, { lat: number; lon: number }> = {
+  'NCR': { lat: 14.5995, lon: 120.9842 },
+  'CAR': { lat: 16.4023, lon: 120.596 },
+  'Ilocos': { lat: 17.5747, lon: 120.3869 },
+  'Cagayan Valley': { lat: 17.6132, lon: 121.727 },
+  'Central Luzon': { lat: 15.145, lon: 120.5887 },
+  'CALABARZON': { lat: 14.1, lon: 121.3 },
+  'MIMAROPA': { lat: 9.7392, lon: 118.7353 },
+  'Bicol': { lat: 13.1391, lon: 123.7438 },
+  'Western Visayas': { lat: 10.7202, lon: 122.5621 },
+  'Central Visayas': { lat: 10.3157, lon: 123.8854 },
+  'Eastern Visayas': { lat: 11.25, lon: 125.0 },
+  'Zamboanga Peninsula': { lat: 6.9214, lon: 122.079 },
+  'Northern Mindanao': { lat: 8.4542, lon: 124.6319 },
+  'Davao': { lat: 7.1907, lon: 125.4553 },
+  'SOCCSKSARGEN': { lat: 6.5, lon: 124.85 },
+  'Caraga': { lat: 8.9475, lon: 125.5406 },
+  'BARMM': { lat: 7.2, lon: 124.23 },
+};
+
+async function fetchRegionDay(region: string, date: string): Promise<RegionStats | null> {
+  const coords = REGION_COORDS[region];
+  if (!coords) return null;
+  try {
+    const res = await fetch(
+      `https://api.open-meteo.com/v1/forecast?latitude=${coords.lat}&longitude=${coords.lon}&hourly=temperature_2m,precipitation,precipitation_probability,wind_speed_10m&timezone=Asia/Manila&start_date=${date}&end_date=${date}`
+    );
+    const data = await res.json();
+    const probs: number[] = data.hourly.precipitation_probability;
+    const rains: number[] = data.hourly.precipitation;
+    const temps: number[] = data.hourly.temperature_2m;
+    const winds: number[] = data.hourly.wind_speed_10m;
+    return {
+      region,
+      avg_prob: Math.round(probs.reduce((a, b) => a + b, 0) / probs.length),
+      total_rain: Math.round(rains.reduce((a, b) => a + b, 0) * 10) / 10,
+      avg_temp: Math.round((temps.reduce((a, b) => a + b, 0) / temps.length) * 10) / 10,
+      avg_wind: Math.round((winds.reduce((a, b) => a + b, 0) / winds.length) * 10) / 10,
+    };
+  } catch {
+    return null;
   }
-  if (b.avg_prob < a.avg_prob - 10) {
-    return { winner: b.region, reason: `${b.avg_prob}% vs ${a.avg_prob}% rain chance - much drier` };
-  }
-  if (Math.abs(a.avg_prob - b.avg_prob) <= 10) {
-    return { winner: 'tie', reason: 'Both regions have similar rain chances' };
-  }
-  return { winner: a.avg_prob < b.avg_prob ? a.region : b.region, reason: 'Slightly less rain expected' };
 }
 
 export function CompareRegions({ regionA, regionB, date, onClose }: Props) {
-  const { query } = useDuckDB();
   const [statsA, setStatsA] = useState<RegionStats | null>(null);
   const [statsB, setStatsB] = useState<RegionStats | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    query<RegionStats>(`
-      SELECT
-        region,
-        ROUND(AVG(rain_probability), 0) as avg_prob,
-        ROUND(SUM(rainfall_mm), 1) as total_rain,
-        ROUND(AVG(temperature), 1) as avg_temp,
-        ROUND(AVG(humidity), 0) as avg_humidity,
-        ROUND(AVG(wind_speed), 1) as avg_wind,
-        COUNT(CASE WHEN rain_intensity != 'None' THEN 1 END) as rainy_hours
-      FROM weather
-      WHERE region IN ('${regionA}', '${regionB}') AND date = '${date}'
-      GROUP BY region
-    `).then((rows) => {
-      const data = convertBigInts(rows);
-      setStatsA(data.find((r) => r.region === regionA) || null);
-      setStatsB(data.find((r) => r.region === regionB) || null);
+    setLoading(true);
+    Promise.all([fetchRegionDay(regionA, date), fetchRegionDay(regionB, date)]).then(([a, b]) => {
+      setStatsA(a);
+      setStatsB(b);
+      setLoading(false);
     });
-  }, [query, regionA, regionB, date]);
+  }, [regionA, regionB, date]);
 
-  if (!statsA || !statsB) {
+  if (loading || !statsA || !statsB) {
     return (
       <div className="compare-container">
         <p className="compare-loading">Loading comparison...</p>
@@ -67,7 +83,8 @@ export function CompareRegions({ regionA, regionB, date, onClose }: Props) {
     );
   }
 
-  const verdict = getVerdict(statsA, statsB);
+  const winner = statsA.avg_prob < statsB.avg_prob ? statsA.region
+    : statsB.avg_prob < statsA.avg_prob ? statsB.region : 'tie';
 
   return (
     <div className="compare-container">
@@ -80,65 +97,26 @@ export function CompareRegions({ regionA, regionB, date, onClose }: Props) {
         </button>
       </div>
 
-      {/* Verdict */}
       <div className="compare-verdict">
-        {verdict.winner === 'tie' ? (
-          <span className="verdict-text tie"><HandshakeIcon size={16} color="#6b7280" /> {verdict.reason}</span>
+        {winner === 'tie' ? (
+          <span className="verdict-text tie"><HandshakeIcon size={16} color="var(--text-muted)" /> Similar conditions</span>
         ) : (
           <span className="verdict-text">
-            <CheckCircleIcon size={16} color="#2e7d32" /> <strong>{verdict.winner}</strong> is better - {verdict.reason}
+            <CheckCircleIcon size={16} color="var(--success)" /> <strong>{winner}</strong> is drier - {statsA.avg_prob < statsB.avg_prob ? statsA.avg_prob : statsB.avg_prob}% vs {statsA.avg_prob >= statsB.avg_prob ? statsA.avg_prob : statsB.avg_prob}% rain
           </span>
         )}
       </div>
 
-      {/* Comparison table */}
       <div className="compare-table">
         <div className="compare-row header">
           <span className="compare-metric"></span>
           <span className="compare-val region-name">{regionA}</span>
           <span className="compare-val region-name">{regionB}</span>
         </div>
-
-        <CompareRow
-          icon={<CloudRainIcon size={16} color="#1976d2" />}
-          label="Rain chance"
-          valA={`${statsA.avg_prob}%`}
-          valB={`${statsB.avg_prob}%`}
-          betterA={statsA.avg_prob < statsB.avg_prob}
-          betterB={statsB.avg_prob < statsA.avg_prob}
-        />
-        <CompareRow
-          icon={<DropletIcon size={16} color="#1565c0" />}
-          label="Total rain"
-          valA={`${statsA.total_rain} mm`}
-          valB={`${statsB.total_rain} mm`}
-          betterA={statsA.total_rain < statsB.total_rain}
-          betterB={statsB.total_rain < statsA.total_rain}
-        />
-        <CompareRow
-          icon={<ThermometerIcon size={16} color="#e65100" />}
-          label="Temperature"
-          valA={`${statsA.avg_temp}\u00B0C`}
-          valB={`${statsB.avg_temp}\u00B0C`}
-          betterA={false}
-          betterB={false}
-        />
-        <CompareRow
-          icon={<WindIcon size={16} color="#546e7a" />}
-          label="Wind"
-          valA={`${statsA.avg_wind} km/h`}
-          valB={`${statsB.avg_wind} km/h`}
-          betterA={statsA.avg_wind < statsB.avg_wind}
-          betterB={statsB.avg_wind < statsA.avg_wind}
-        />
-        <CompareRow
-          icon={<CloudRainIcon size={16} color="#7b1fa2" />}
-          label="Rainy hours"
-          valA={`${statsA.rainy_hours}`}
-          valB={`${statsB.rainy_hours}`}
-          betterA={statsA.rainy_hours < statsB.rainy_hours}
-          betterB={statsB.rainy_hours < statsA.rainy_hours}
-        />
+        <CompareRow icon={<CloudRainIcon size={16} color="#1976d2" />} label="Rain chance" valA={`${statsA.avg_prob}%`} valB={`${statsB.avg_prob}%`} betterA={statsA.avg_prob < statsB.avg_prob} betterB={statsB.avg_prob < statsA.avg_prob} />
+        <CompareRow icon={<DropletIcon size={16} color="#1565c0" />} label="Total rain" valA={`${statsA.total_rain}mm`} valB={`${statsB.total_rain}mm`} betterA={statsA.total_rain < statsB.total_rain} betterB={statsB.total_rain < statsA.total_rain} />
+        <CompareRow icon={<ThermometerIcon size={16} color="#e65100" />} label="Temp" valA={`${statsA.avg_temp}\u00B0C`} valB={`${statsB.avg_temp}\u00B0C`} betterA={false} betterB={false} />
+        <CompareRow icon={<WindIcon size={16} color="#546e7a" />} label="Wind" valA={`${statsA.avg_wind}km/h`} valB={`${statsB.avg_wind}km/h`} betterA={statsA.avg_wind < statsB.avg_wind} betterB={statsB.avg_wind < statsA.avg_wind} />
       </div>
     </div>
   );
@@ -149,10 +127,7 @@ function CompareRow({ icon, label, valA, valB, betterA, betterB }: {
 }) {
   return (
     <div className="compare-row">
-      <span className="compare-metric">
-        {icon}
-        <span>{label}</span>
-      </span>
+      <span className="compare-metric">{icon}<span>{label}</span></span>
       <span className={`compare-val ${betterA ? 'better' : ''}`}>{valA}</span>
       <span className={`compare-val ${betterB ? 'better' : ''}`}>{valB}</span>
     </div>

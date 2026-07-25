@@ -1,19 +1,10 @@
-import { useEffect, useState, type ReactNode } from 'react';
-import { useDuckDB } from '../hooks/useDuckDB';
-import { convertBigInts } from '../utils/query-helpers';
+import { type ReactNode } from 'react';
 import { StormIcon, CloudRainIcon, CloudSunRainIcon, CloudSunIcon, SunIcon } from './Icons';
+import type { DailySummary } from '../hooks/useWeatherData';
 import './DayCards.css';
 
-interface DaySummary {
-  date: string;
-  avg_prob: number;
-  max_prob: number;
-  total_rain: number;
-  avg_temp: number;
-}
-
 interface Props {
-  region: string;
+  daily: DailySummary[];
   selectedDate: string;
   onSelectDate: (date: string) => void;
 }
@@ -38,30 +29,12 @@ function getRainVerdict(avgProb: number): { text: string; icon: ReactNode; color
   return { text: 'Clear skies', icon: <SunIcon size={28} color="#4caf50" />, color: '#4caf50' };
 }
 
-export function DayCards({ region, selectedDate, onSelectDate }: Props) {
-  const { query } = useDuckDB();
-  const [days, setDays] = useState<DaySummary[]>([]);
-
-  useEffect(() => {
-    query<DaySummary>(`
-      SELECT
-        CAST(date AS VARCHAR) as date,
-        ROUND(AVG(rain_probability), 0) as avg_prob,
-        MAX(rain_probability) as max_prob,
-        ROUND(SUM(rainfall_mm), 1) as total_rain,
-        ROUND(AVG(temperature), 1) as avg_temp
-      FROM weather
-      WHERE region = '${region}'
-      GROUP BY date
-      ORDER BY date
-    `).then((rows) => setDays(convertBigInts(rows)));
-  }, [query, region]);
-
-  if (days.length === 0) return null;
+export function DayCards({ daily, selectedDate, onSelectDate }: Props) {
+  if (daily.length === 0) return null;
 
   return (
     <div className="day-cards">
-      {days.map((day, i) => {
+      {daily.map((day, i) => {
         const verdict = getRainVerdict(day.avg_prob);
         const isSelected = day.date === selectedDate;
         return (

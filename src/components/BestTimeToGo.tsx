@@ -1,17 +1,9 @@
-import { useEffect, useState } from 'react';
-import { useDuckDB } from '../hooks/useDuckDB';
-import { convertBigInts } from '../utils/query-helpers';
 import { CheckCircleIcon, CloudRainIcon, SunIcon } from './Icons';
+import type { HourlyData } from '../hooks/useWeatherData';
 import './BestTimeToGo.css';
 
-interface HourSlot {
-  hour: number;
-  rain_probability: number;
-}
-
 interface Props {
-  region: string;
-  date: string;
+  hourly: HourlyData[];
 }
 
 function getHourLabel(hour: number): string {
@@ -22,51 +14,32 @@ function getHourLabel(hour: number): string {
 }
 
 function formatWindow(start: number, end: number): string {
-  return `${getHourLabel(start)} - ${getHourLabel(end)}`;
+  return `${getHourLabel(start)} - ${getHourLabel(end > 23 ? 23 : end)}`;
 }
 
-export function BestTimeToGo({ region, date }: Props) {
-  const { query } = useDuckDB();
-  const [bestWindow, setBestWindow] = useState<{ start: number; end: number; avgProb: number } | null>(null);
-  const [worstWindow, setWorstWindow] = useState<{ start: number; end: number; avgProb: number } | null>(null);
+export function BestTimeToGo({ hourly }: Props) {
+  if (hourly.length < 3) return null;
 
-  useEffect(() => {
-    query<HourSlot>(`
-      SELECT
-        hour,
-        ROUND(AVG(rain_probability), 0) as rain_probability
-      FROM weather
-      WHERE region = '${region}' AND date = '${date}'
-      GROUP BY hour
-      ORDER BY hour
-    `).then((rows) => {
-      const hours = convertBigInts(rows);
-      if (hours.length < 3) return;
+  let bestStart = 0;
+  let bestAvg = 100;
+  let worstStart = 0;
+  let worstAvg = 0;
 
-      // Find best 3-hour window (lowest average rain probability)
-      let bestStart = 0;
-      let bestAvg = 100;
-      let worstStart = 0;
-      let worstAvg = 0;
-
-      for (let i = 0; i <= hours.length - 3; i++) {
-        const windowAvg = (hours[i].rain_probability + hours[i + 1].rain_probability + hours[i + 2].rain_probability) / 3;
-        if (windowAvg < bestAvg) {
-          bestAvg = windowAvg;
-          bestStart = hours[i].hour;
-        }
-        if (windowAvg > worstAvg) {
-          worstAvg = windowAvg;
-          worstStart = hours[i].hour;
-        }
-      }
-
-      setBestWindow({ start: bestStart, end: bestStart + 3, avgProb: Math.round(bestAvg) });
-      setWorstWindow({ start: worstStart, end: worstStart + 3, avgProb: Math.round(worstAvg) });
-    });
-  }, [query, region, date]);
-
-  if (!bestWindow || !worstWindow) return null;
+  for (let i = 0; i <= hourly.length - 3; i++) {
+    const windowAvg = (
+      hourly[i].precipitation_probability +
+      hourly[i + 1].precipitation_probability +
+      hourly[i + 2].precipitation_probability
+    ) / 3;
+    if (windowAvg < bestAvg) {
+      bestAvg = windowAvg;
+      bestStart = hourly[i].hour;
+    }
+    if (windowAvg > worstAvg) {
+      worstAvg = windowAvg;
+      worstStart = hourly[i].hour;
+    }
+  }
 
   return (
     <div className="best-time">
@@ -76,8 +49,8 @@ export function BestTimeToGo({ region, date }: Props) {
         </div>
         <div className="btc-info">
           <span className="btc-label">Best time to go out</span>
-          <strong className="btc-time">{formatWindow(bestWindow.start, bestWindow.end)}</strong>
-          <span className="btc-prob">{bestWindow.avgProb}% rain chance</span>
+          <strong className="btc-time">{formatWindow(bestStart, bestStart + 3)}</strong>
+          <span className="btc-prob">{Math.round(bestAvg)}% rain chance</span>
         </div>
         <CheckCircleIcon size={18} color="#2e7d32" />
       </div>
@@ -88,8 +61,8 @@ export function BestTimeToGo({ region, date }: Props) {
         </div>
         <div className="btc-info">
           <span className="btc-label">Avoid going out</span>
-          <strong className="btc-time">{formatWindow(worstWindow.start, worstWindow.end)}</strong>
-          <span className="btc-prob">{worstWindow.avgProb}% rain chance</span>
+          <strong className="btc-time">{formatWindow(worstStart, worstStart + 3)}</strong>
+          <span className="btc-prob">{Math.round(worstAvg)}% rain chance</span>
         </div>
         <CloudRainIcon size={18} color="#c62828" />
       </div>
