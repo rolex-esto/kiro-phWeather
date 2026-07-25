@@ -62,8 +62,6 @@
 
 html {
   -webkit-text-size-adjust: 100%;
-  -moz-text-size-adjust: 100%;
-  overflow-x: hidden;
 }
 
 body {
@@ -73,15 +71,11 @@ body {
   line-height: 1.6;
   min-height: 100vh;
   -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  overflow-x: hidden;
-  width: 100%;
   transition: background 0.3s, color 0.3s;
 }
 
 #root {
   min-height: 100vh;
-  overflow-x: hidden;
 }
 
 /* Prevent zoom on input focus - iOS */
@@ -94,12 +88,6 @@ body {
 button, [role="button"] {
   font-family: inherit;
   -webkit-tap-highlight-color: transparent;
-  touch-action: manipulation;
-}
-
-/* Disable horizontal overscroll only */
-html {
-  overscroll-behavior-x: none;
 }
 
 @media (prefers-reduced-motion: no-preference) {
@@ -124,8 +112,6 @@ html {
 
 @supports (padding: env(safe-area-inset-bottom)) {
   body {
-    padding-left: env(safe-area-inset-left);
-    padding-right: env(safe-area-inset-right);
     padding-bottom: env(safe-area-inset-bottom);
   }
 }
