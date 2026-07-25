@@ -99,6 +99,8 @@
   border-radius: 16px;
   box-shadow: var(--shadow-md);
   padding: 1.25rem;
+  overflow: hidden;
+  width: 100%;
 }
 
 .section-header {
