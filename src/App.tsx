@@ -29,6 +29,29 @@ function App() {
         </main>
         <footer className="app-footer">
           <p className="footer-data">Forecast data for July 25-31, 2026 - Philippine Rainy Season</p>
+
+          <div className="footer-sources">
+            <p className="footer-disclaimer">
+              <strong>Note:</strong> Rain forecasts shown are simulated sample data
+              modeled on typical Philippine rainy season patterns, not live readings.
+              For official advisories, check{' '}
+              <a href="https://www.pagasa.dost.gov.ph/" target="_blank" rel="noopener noreferrer">
+                PAGASA
+              </a>.
+            </p>
+            <p className="footer-source-line">
+              Region boundaries from{' '}
+              <a href="https://github.com/faeldon/philippines-json-maps" target="_blank" rel="noopener noreferrer">
+                philippines-json-maps
+              </a>
+              {' '}(based on{' '}
+              <a href="https://psa.gov.ph/classification/psgc" target="_blank" rel="noopener noreferrer">
+                PSGC
+              </a>
+              {' '}data)
+            </p>
+          </div>
+
           <div className="footer-credits">
             <span>Built by <strong>Rolex Esto</strong></span>
             <div className="footer-links">
