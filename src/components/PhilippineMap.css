@@ -25,7 +25,7 @@
 
 .map-loading {
   padding: 4rem;
-  color: #6b7280;
+  color: var(--text-secondary);
   font-size: 0.9rem;
 }
 
@@ -51,7 +51,7 @@
   stroke-width: 0.8;
   stroke-linejoin: round;
   cursor: pointer;
-  transition: fill 0.2s, stroke 0.2s, transform 0.2s;
+  transition: fill 0.2s, stroke 0.2s;
   outline: none;
 }
 
@@ -104,14 +104,8 @@
 }
 
 @keyframes mapPulse {
-  0% {
-    r: 10;
-    opacity: 0.7;
-  }
-  100% {
-    r: 24;
-    opacity: 0;
-  }
+  0% { r: 10; opacity: 0.7; }
+  100% { r: 24; opacity: 0; }
 }
 
 .pin-label-group {
@@ -161,27 +155,24 @@
   color: var(--text-secondary);
 }
 
-/* Responsive - Tablet (map goes full width) */
+/* MOBILE: Map is compact, not full-height */
 @media (max-width: 900px) {
   .ph-map-container {
-    padding: 1.25rem;
-  }
-
-  .map-wrapper {
-    max-width: 500px;
-  }
-}
-
-/* Responsive - Mobile */
-@media (max-width: 600px) {
-  .ph-map-container {
     padding: 1rem;
-    border-radius: 14px;
   }
 
   .map-wrapper {
-    max-width: 100%;
-    border-radius: 12px;
+    max-height: 350px;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .ph-map-svg {
+    width: 100%;
+    max-height: 340px;
+    object-fit: contain;
   }
 
   .map-title {
@@ -189,30 +180,39 @@
   }
 
   .map-subtitle {
-    font-size: 0.8rem;
-    margin-bottom: 0.75rem;
-  }
-
-  .pin-label-text {
-    font-size: 10px;
-  }
-
-  .selected-region-badge {
-    font-size: 0.9rem;
-    padding: 0.5rem 1rem;
+    font-size: 0.78rem;
+    margin-bottom: 0.5rem;
   }
 }
 
-@media (max-width: 400px) {
+@media (max-width: 600px) {
   .ph-map-container {
     padding: 0.75rem;
+    border-radius: 14px;
   }
 
-  .pin-dot {
-    stroke-width: 1.5;
+  .map-wrapper {
+    max-height: 280px;
+    border-radius: 12px;
+  }
+
+  .selected-region-badge {
+    font-size: 0.85rem;
+    padding: 0.45rem 1rem;
+    margin-top: 0.75rem;
   }
 
   .pin-label-text {
     font-size: 9px;
+  }
+}
+
+@media (max-width: 400px) {
+  .map-wrapper {
+    max-height: 240px;
+  }
+
+  .ph-map-container {
+    padding: 0.5rem;
   }
 }

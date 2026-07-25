@@ -72,12 +72,12 @@
 }
 
 .dashboard-search {
-  margin-bottom: 1.25rem;
+  margin-bottom: 1rem;
 }
 
 .dashboard-layout {
   display: grid;
-  grid-template-columns: 400px 1fr;
+  grid-template-columns: 380px 1fr;
   gap: 1.5rem;
   align-items: start;
 }
@@ -120,60 +120,6 @@
   color: var(--text-muted);
   margin-bottom: 0.75rem;
   margin-left: 1.75rem;
-}
-
-/* Responsive */
-@media (max-width: 1100px) {
-  .dashboard-layout {
-    grid-template-columns: 350px 1fr;
-    gap: 1.25rem;
-  }
-}
-
-@media (max-width: 900px) {
-  .dashboard-layout {
-    grid-template-columns: 1fr;
-    gap: 1.25rem;
-  }
-
-  .dashboard-sidebar {
-    position: static;
-    order: 1;
-  }
-
-  .dashboard-content {
-    order: 2;
-  }
-
-  .section-desc {
-    margin-left: 0;
-  }
-}
-
-@media (max-width: 600px) {
-  .dashboard-search {
-    margin-bottom: 0.75rem;
-  }
-
-  .dashboard-layout {
-    gap: 0.75rem;
-  }
-
-  .section-card {
-    padding: 1rem;
-    border-radius: 14px;
-  }
-}
-
-@media (max-width: 400px) {
-  .section-card {
-    padding: 0.75rem;
-    border-radius: 12px;
-  }
-
-  .section-title {
-    font-size: 0.9rem;
-  }
 }
 
 /* Region actions bar */
@@ -245,7 +191,58 @@
   border-color: var(--accent);
 }
 
+/* DESKTOP large */
+@media (max-width: 1100px) {
+  .dashboard-layout {
+    grid-template-columns: 340px 1fr;
+    gap: 1.25rem;
+  }
+}
+
+/* TABLET + MOBILE: single column, forecast FIRST, map BELOW */
+@media (max-width: 900px) {
+  .dashboard-layout {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+
+  .dashboard-sidebar {
+    position: static;
+    order: 2;
+  }
+
+  .dashboard-content {
+    order: 1;
+  }
+
+  .section-desc {
+    margin-left: 0;
+  }
+}
+
 @media (max-width: 600px) {
+  .dashboard-search {
+    margin-bottom: 0.75rem;
+  }
+
+  .dashboard-layout {
+    gap: 0.75rem;
+  }
+
+  .section-card {
+    padding: 0.85rem;
+    border-radius: 12px;
+  }
+
+  .section-title {
+    font-size: 0.9rem;
+  }
+
+  .section-desc {
+    font-size: 0.72rem;
+    margin-bottom: 0.5rem;
+  }
+
   .region-actions {
     flex-wrap: wrap;
   }
@@ -257,5 +254,12 @@
 
   .compare-select {
     width: 100%;
+  }
+}
+
+@media (max-width: 400px) {
+  .section-card {
+    padding: 0.7rem;
+    border-radius: 10px;
   }
 }
