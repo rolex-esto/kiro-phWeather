@@ -2,11 +2,10 @@
   display: flex;
   gap: 0.5rem;
   overflow-x: auto;
-  overflow-y: hidden;
   padding: 0.25rem 0;
-  scroll-snap-type: x mandatory;
   -webkit-overflow-scrolling: touch;
-  width: 100%;
+  min-width: 0;
+  max-width: 100%;
 }
 
 .day-cards::-webkit-scrollbar {

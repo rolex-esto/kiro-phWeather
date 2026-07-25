@@ -184,11 +184,13 @@ export function PhilippineMap({ selected, onSelect }: Props) {
                 {isSelected && (
                   <circle cx={x} cy={y} r={16} className="pin-pulse" />
                 )}
+                {/* Larger transparent hit area for touch */}
+                <circle cx={x} cy={y} r={18} fill="transparent" />
                 {/* Pin marker */}
                 <circle
                   cx={x}
                   cy={y}
-                  r={isSelected ? 8 : isHovered ? 7 : 5}
+                  r={isSelected ? 9 : isHovered ? 8 : 6.5}
                   className="pin-dot"
                 />
                 {/* Label */}

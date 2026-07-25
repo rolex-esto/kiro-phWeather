@@ -7,10 +7,9 @@
   border-radius: 12px;
   box-shadow: var(--shadow-sm);
   overflow-x: auto;
-  overflow-y: hidden;
   -webkit-overflow-scrolling: touch;
   margin-bottom: 0.75rem;
-  width: 100%;
+  min-width: 0;
   max-width: 100%;
 }
 

@@ -1,17 +1,16 @@
 .hourly-timeline {
-  width: 100%;
-  overflow: hidden;
+  min-width: 0;
+  max-width: 100%;
 }
 
 .timeline-scroll {
   display: flex;
   gap: 1px;
   overflow-x: auto;
-  overflow-y: hidden;
   padding: 0.4rem 0;
-  scroll-snap-type: x mandatory;
   -webkit-overflow-scrolling: touch;
-  width: 100%;
+  min-width: 0;
+  max-width: 100%;
 }
 
 .timeline-scroll::-webkit-scrollbar {
