@@ -1,0 +1,137 @@
+.compare-container {
+  background: var(--bg-card);
+  border-radius: 16px;
+  box-shadow: var(--shadow-md);
+  padding: 1.25rem;
+  border: 2px solid var(--accent);
+}
+
+.compare-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.75rem;
+}
+
+.compare-header h3 {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.compare-close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  border: none;
+  background: var(--bg-card-hover);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.compare-close:hover {
+  background: var(--danger-light);
+  color: var(--danger);
+}
+
+.compare-verdict {
+  padding: 0.7rem 1rem;
+  border-radius: 10px;
+  background: var(--success-light);
+  margin-bottom: 1rem;
+}
+
+.verdict-text {
+  font-size: 0.85rem;
+  color: var(--text-primary);
+}
+
+.verdict-text.tie {
+  color: var(--text-secondary);
+}
+
+.compare-loading {
+  text-align: center;
+  color: var(--text-secondary);
+  padding: 2rem;
+}
+
+/* Table */
+.compare-table {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.compare-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 0.5rem;
+  align-items: center;
+  padding: 0.55rem 0.6rem;
+  border-radius: 8px;
+}
+
+.compare-row:not(.header):hover {
+  background: var(--bg-card-hover);
+}
+
+.compare-row.header {
+  border-bottom: 1px solid var(--border-color);
+  padding-bottom: 0.6rem;
+  margin-bottom: 0.25rem;
+}
+
+.compare-metric {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+.compare-val {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  text-align: center;
+}
+
+.compare-val.region-name {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--accent);
+}
+
+.compare-val.better {
+  color: var(--success);
+  position: relative;
+}
+
+.compare-val.better::after {
+  content: ' ✓';
+  font-size: 0.7rem;
+}
+
+@media (max-width: 600px) {
+  .compare-container {
+    padding: 1rem;
+  }
+
+  .compare-row {
+    padding: 0.45rem 0.4rem;
+  }
+
+  .compare-metric span {
+    font-size: 0.72rem;
+  }
+
+  .compare-val {
+    font-size: 0.78rem;
+  }
+}

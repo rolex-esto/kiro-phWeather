@@ -1,0 +1,107 @@
+.travel-advice {
+  border-radius: 16px;
+  padding: 1.25rem;
+  border-left: 5px solid var(--accent);
+  box-shadow: var(--shadow-sm);
+}
+
+.advice-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.advice-icon-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  flex-shrink: 0;
+}
+
+.advice-verdict {
+  font-size: 1.15rem;
+  font-weight: 700;
+  margin: 0;
+  line-height: 1.2;
+}
+
+.advice-region {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+}
+
+.advice-stats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.2rem;
+  padding: 0.6rem 0.25rem;
+  background: var(--bg-card-hover);
+  border-radius: 10px;
+}
+
+.stat-value {
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.stat-label {
+  font-size: 0.62rem;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.advice-tips {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.advice-tips li {
+  font-size: 0.82rem;
+  color: var(--text-primary);
+  padding: 0.3rem 0.5rem 0.3rem 1.3rem;
+  position: relative;
+  line-height: 1.4;
+}
+
+.advice-tips li::before {
+  content: '';
+  position: absolute;
+  left: 0.4rem;
+  top: 0.65rem;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--text-muted);
+}
+
+@media (max-width: 480px) {
+  .advice-stats {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .advice-verdict {
+    font-size: 1.05rem;
+  }
+
+  .travel-advice {
+    padding: 1rem;
+  }
+}

@@ -1,0 +1,31 @@
+.star-button {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  background: var(--bg-card);
+  border: 1.5px solid var(--border-color);
+  border-radius: 8px;
+  padding: 0.4rem 0.6rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.star-button:hover {
+  border-color: #f59e0b;
+  background: var(--warning-light);
+}
+
+.star-button.active {
+  border-color: #f59e0b;
+  background: var(--warning-light);
+}
+
+.star-label {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.star-button.active .star-label {
+  color: #d97706;
+}

@@ -1,0 +1,91 @@
+.favorite-regions {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.6rem 1rem;
+  background: var(--bg-card);
+  border-radius: 12px;
+  box-shadow: var(--shadow-sm);
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  margin-bottom: 0.75rem;
+}
+
+.fav-label {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.fav-chips {
+  display: flex;
+  gap: 0.4rem;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.fav-chip {
+  display: flex;
+  align-items: center;
+  border-radius: 20px;
+  border: 1.5px solid var(--border-color);
+  background: var(--bg-card-hover);
+  overflow: hidden;
+  flex-shrink: 0;
+  transition: all 0.2s;
+}
+
+.fav-chip.active {
+  border-color: var(--accent);
+  background: var(--accent-light);
+}
+
+.fav-chip-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.35rem 0.6rem;
+  border: none;
+  background: transparent;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.fav-chip.active .fav-chip-btn {
+  color: var(--accent);
+}
+
+.fav-chip-remove {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.3rem 0.4rem;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  opacity: 0.5;
+  transition: opacity 0.2s;
+  border-left: 1px solid var(--border-color);
+}
+
+.fav-chip-remove:hover {
+  opacity: 1;
+  background: var(--danger-light);
+}
+
+@media (max-width: 600px) {
+  .favorite-regions {
+    padding: 0.5rem 0.75rem;
+    border-radius: 10px;
+  }
+}
