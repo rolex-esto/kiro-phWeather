@@ -33,28 +33,30 @@ export function DuckDBProvider({ children }: { children: ReactNode }) {
       try {
         const duckdb = await import('@duckdb/duckdb-wasm');
 
-        const bundle = await duckdb.selectBundle({
-          mvp: {
-            mainModule: '/duckdb/duckdb-mvp.wasm',
-            mainWorker: '/duckdb/duckdb-browser-mvp.worker.js',
-          },
-          eh: {
-            mainModule: '/duckdb/duckdb-eh.wasm',
-            mainWorker: '/duckdb/duckdb-browser-eh.worker.js',
-          },
-        });
+        // Use jsdelivr CDN for WASM bundles (no local files needed)
+        const JSDELIVR_BUNDLES = duckdb.getJsDelivrBundles();
+        const bundle = await duckdb.selectBundle(JSDELIVR_BUNDLES);
 
         if (!bundle.mainWorker) {
           throw new Error('No suitable DuckDB-WASM worker bundle found');
         }
 
-        const worker = new Worker(bundle.mainWorker);
+        // Create worker via blob URL to avoid CORS with CDN
+        const workerUrl = URL.createObjectURL(
+          new Blob([`importScripts("${bundle.mainWorker}");`], {
+            type: 'text/javascript',
+          })
+        );
+
+        const worker = new Worker(workerUrl);
         const logger = new duckdb.ConsoleLogger();
         const database = new duckdb.AsyncDuckDB(logger, worker);
         await database.instantiate(bundle.mainModule, bundle.pthreadWorker);
+        URL.revokeObjectURL(workerUrl);
 
         const connection = await database.connect();
 
+        // Load the Parquet file
         const response = await fetch('/data/ph_rain_forecast.parquet');
         if (!response.ok) {
           throw new Error(`Failed to fetch parquet file: ${response.status}`);

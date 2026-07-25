@@ -7,6 +7,9 @@ dist/
 # Vite cache
 node_modules/.vite/
 
+# DuckDB WASM (loaded from CDN in production)
+public/duckdb/
+
 # IDE
 .vscode/
 .idea/
