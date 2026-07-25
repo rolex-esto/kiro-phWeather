@@ -1,0 +1,60 @@
+.location-detect {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.detect-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.5rem 0.85rem;
+  background: var(--accent);
+  color: white;
+  border: none;
+  border-radius: 10px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.15s;
+  white-space: nowrap;
+}
+
+.detect-btn:hover:not(:disabled) {
+  background: var(--accent-hover);
+  transform: translateY(-1px);
+}
+
+.detect-btn:active:not(:disabled) {
+  transform: scale(0.97);
+}
+
+.detect-btn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.detect-spinner {
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top-color: white;
+  border-radius: 50%;
+  animation: detectSpin 0.6s linear infinite;
+}
+
+@keyframes detectSpin {
+  to { transform: rotate(360deg); }
+}
+
+.detect-error {
+  font-size: 0.7rem;
+  color: var(--danger);
+}
+
+@media (max-width: 600px) {
+  .detect-btn {
+    padding: 0.45rem 0.7rem;
+    font-size: 0.72rem;
+  }
+}

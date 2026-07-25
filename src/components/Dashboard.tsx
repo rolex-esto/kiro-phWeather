@@ -1,20 +1,25 @@
-import { useState } from 'react';
+import { useState, lazy, Suspense } from 'react';
 import { useWeatherData } from '../hooks/useWeatherData';
 import { useFavorites } from '../hooks/useFavorites';
+import { useGeolocation } from '../hooks/useGeolocation';
 import { PhilippineMap } from './PhilippineMap';
 import { RegionSearch } from './RegionSearch';
+import { LocationDetect } from './LocationDetect';
 import { FavoriteRegions } from './FavoriteRegions';
 import { TyphoonBanner } from './TyphoonBanner';
 import { BestTimeToGo } from './BestTimeToGo';
+import { SmartRecommendations } from './SmartRecommendations';
 import { DayCards } from './DayCards';
 import { HourlyTimeline } from './HourlyTimeline';
 import { TravelAdvice } from './TravelAdvice';
-import { RainChart } from './RainChart';
-import { CompareRegions } from './CompareRegions';
 import { StarButton } from './StarButton';
-import { CalendarIcon, ClockIcon, TrendingUpIcon, SunIcon } from './Icons';
+import { CalendarIcon, ClockIcon, TrendingUpIcon, SunIcon, AlertCircleIcon } from './Icons';
 import { getRegionLabel } from '../utils/regions';
 import './Dashboard.css';
+
+// Lazy load heavy chart components (Recharts is ~400KB)
+const RainChart = lazy(() => import('./RainChart').then((m) => ({ default: m.RainChart })));
+const CompareRegions = lazy(() => import('./CompareRegions').then((m) => ({ default: m.CompareRegions })));
 
 const ALL_REGIONS = [
   'NCR', 'CAR', 'Ilocos', 'Cagayan Valley', 'Central Luzon',
@@ -29,7 +34,13 @@ export function Dashboard() {
   const [compareMode, setCompareMode] = useState(false);
   const [compareRegion, setCompareRegion] = useState('Bicol');
   const { favorites, toggleFavorite, removeFavorite, isFavorite } = useFavorites();
+  const { detecting, error: geoError, detect } = useGeolocation();
   const { loading, error, hourly, daily, lastUpdated, refetch } = useWeatherData(selectedRegion);
+
+  async function handleDetectLocation() {
+    const region = await detect();
+    if (region) setSelectedRegion(region);
+  }
 
   if (loading) {
     return (
@@ -64,6 +75,7 @@ export function Dashboard() {
 
       <div className="dashboard-search">
         <RegionSearch selected={selectedRegion} onSelect={setSelectedRegion} />
+        <LocationDetect detecting={detecting} onDetect={handleDetectLocation} error={geoError} />
       </div>
 
       {favorites.length > 0 && (
@@ -117,17 +129,29 @@ export function Dashboard() {
                   ))}
                 </select>
               </div>
-              <CompareRegions
-                regionA={selectedRegion}
-                regionB={compareRegion}
-                date={selectedDate}
-                onClose={() => setCompareMode(false)}
-              />
+              <Suspense fallback={<p className="lazy-loading">Loading comparison...</p>}>
+                <CompareRegions
+                  regionA={selectedRegion}
+                  regionB={compareRegion}
+                  date={selectedDate}
+                  onClose={() => setCompareMode(false)}
+                />
+              </Suspense>
             </div>
           )}
 
           {/* Travel advice */}
           <TravelAdvice hourly={todayHourly} region={selectedRegion} />
+
+          {/* Smart recommendations */}
+          <div className="section-card">
+            <div className="section-header">
+              <AlertCircleIcon size={18} color="var(--accent)" />
+              <h2 className="section-title">Conditions & Alerts</h2>
+            </div>
+            <p className="section-desc">Umbrella, flood risk, riding conditions</p>
+            <SmartRecommendations hourly={todayHourly} region={selectedRegion} />
+          </div>
 
           {/* Best time to go */}
           <div className="section-card">
@@ -170,7 +194,9 @@ export function Dashboard() {
               <h2 className="section-title">Weekly Rain Trend</h2>
             </div>
             <p className="section-desc">{getRegionLabel(selectedRegion)}</p>
-            <RainChart daily={daily} />
+            <Suspense fallback={<p className="lazy-loading">Loading chart...</p>}>
+              <RainChart daily={daily} />
+            </Suspense>
           </div>
         </section>
       </div>

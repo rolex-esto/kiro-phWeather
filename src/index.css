@@ -115,3 +115,31 @@ button, [role="button"] {
     padding-bottom: env(safe-area-inset-bottom);
   }
 }
+
+
+/* Focus styles for keyboard navigation */
+:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* Remove focus outline for mouse/touch users */
+:focus:not(:focus-visible) {
+  outline: none;
+}
+
+/* High contrast for better accessibility */
+@media (prefers-contrast: high) {
+  :root {
+    --text-primary: #000000;
+    --text-secondary: #333333;
+    --border-color: #666666;
+  }
+
+  [data-theme="dark"] {
+    --text-primary: #ffffff;
+    --text-secondary: #cccccc;
+    --border-color: #888888;
+  }
+}

@@ -93,6 +93,26 @@
   font-size: 0.82rem;
 }
 
+/* Severity legend */
+.severity-legend {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  justify-content: center;
+  padding-top: 0.5rem;
+  margin-top: 0.4rem;
+  border-top: 1px solid var(--border-color);
+  font-size: 0.6rem;
+  color: var(--text-secondary);
+}
+
+.legend-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  margin-left: 0.4rem;
+}
+
 @media (max-width: 600px) {
   .hour-slot {
     min-width: 40px;

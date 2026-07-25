@@ -9,7 +9,8 @@ function App() {
 
   return (
     <div className="app">
-      <header className="app-header">
+      <a href="#main-content" className="skip-link">Skip to forecast</a>
+      <header className="app-header" role="banner">
         <div className="header-brand">
           <CloudRainIcon size={28} color="white" />
           <div>
@@ -22,7 +23,7 @@ function App() {
           <DarkModeToggle isDark={isDark} onToggle={toggle} />
         </div>
       </header>
-      <main className="app-main">
+      <main className="app-main" id="main-content" role="main">
         <Dashboard />
       </main>
       <footer className="app-footer">

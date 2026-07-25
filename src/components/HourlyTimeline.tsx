@@ -1,5 +1,6 @@
 import { type ReactNode } from 'react';
 import { StormIcon, CloudRainIcon, CloudSunRainIcon, CloudSunIcon, SunIcon } from './Icons';
+import { getProbabilitySeverity } from '../utils/rain-severity';
 import type { HourlyData } from '../hooks/useWeatherData';
 import './HourlyTimeline.css';
 
@@ -15,23 +16,11 @@ function getHourLabel(hour: number): string {
 }
 
 function getRainIcon(prob: number, precip: number): ReactNode {
-  if (precip > 15) return <StormIcon size={16} color="#1565c0" />;
-  if (precip > 7.5) return <CloudRainIcon size={16} color="#1976d2" />;
-  if (prob >= 50) return <CloudSunRainIcon size={16} color="#42a5f5" />;
-  if (prob >= 25) return <CloudSunIcon size={16} color="#ff9800" />;
-  return <SunIcon size={16} color="#ffc107" />;
-}
-
-function getProbColor(prob: number): string {
-  if (prob >= 80) return '#1565c0';
-  if (prob >= 60) return '#1976d2';
-  if (prob >= 40) return '#42a5f5';
-  if (prob >= 20) return '#90caf9';
-  return '#e3f2fd';
-}
-
-function getProbTextColor(prob: number): string {
-  return prob >= 50 ? 'white' : '#1f2937';
+  if (precip > 15) return <StormIcon size={16} color="#b71c1c" />;
+  if (precip > 7.5) return <CloudRainIcon size={16} color="#ef5350" />;
+  if (prob >= 50) return <CloudSunRainIcon size={16} color="#ffa726" />;
+  if (prob >= 25) return <CloudSunIcon size={16} color="#66bb6a" />;
+  return <SunIcon size={16} color="#4caf50" />;
 }
 
 export function HourlyTimeline({ hourly }: Props) {
@@ -42,32 +31,42 @@ export function HourlyTimeline({ hourly }: Props) {
   const nowHour = new Date().getHours();
 
   return (
-    <div className="hourly-timeline">
+    <div className="hourly-timeline" role="list" aria-label="Hourly rain forecast">
       <div className="timeline-scroll">
-        {hourly.map((h) => (
-          <div
-            key={h.hour}
-            className={`hour-slot ${h.hour === nowHour ? 'current' : ''}`}
-          >
-            <span className="hour-time">{getHourLabel(h.hour)}</span>
-            <span className="hour-icon">{getRainIcon(h.precipitation_probability, h.precipitation)}</span>
+        {hourly.map((h) => {
+          const severity = getProbabilitySeverity(h.precipitation_probability);
+          return (
             <div
-              className="hour-prob-bar"
-              style={{
-                background: getProbColor(h.precipitation_probability),
-                height: `${Math.max(6, h.precipitation_probability * 0.5)}px`,
-              }}
+              key={h.hour}
+              className={`hour-slot ${h.hour === nowHour ? 'current' : ''}`}
+              role="listitem"
+              aria-label={`${getHourLabel(h.hour)}: ${h.precipitation_probability}% rain, ${Math.round(h.temperature)} degrees`}
             >
-              <span
-                className="hour-prob-text"
-                style={{ color: getProbTextColor(h.precipitation_probability) }}
+              <span className="hour-time">{getHourLabel(h.hour)}</span>
+              <span className="hour-icon">{getRainIcon(h.precipitation_probability, h.precipitation)}</span>
+              <div
+                className="hour-prob-bar"
+                style={{
+                  background: severity.color,
+                  height: `${Math.max(6, h.precipitation_probability * 0.5)}px`,
+                }}
               >
-                {h.precipitation_probability}%
-              </span>
+                <span className="hour-prob-text" style={{ color: h.precipitation_probability >= 40 ? 'white' : '#1f2937' }}>
+                  {h.precipitation_probability}%
+                </span>
+              </div>
+              <span className="hour-temp">{Math.round(h.temperature)}{'\u00B0'}</span>
             </div>
-            <span className="hour-temp">{Math.round(h.temperature)}{'\u00B0'}</span>
-          </div>
-        ))}
+          );
+        })}
+      </div>
+      {/* Severity legend */}
+      <div className="severity-legend" aria-label="Rain severity legend">
+        <span className="legend-dot" style={{ background: '#4caf50' }}></span><span>Clear</span>
+        <span className="legend-dot" style={{ background: '#66bb6a' }}></span><span>Light</span>
+        <span className="legend-dot" style={{ background: '#ffa726' }}></span><span>Moderate</span>
+        <span className="legend-dot" style={{ background: '#ef5350' }}></span><span>Heavy</span>
+        <span className="legend-dot" style={{ background: '#b71c1c' }}></span><span>Extreme</span>
       </div>
     </div>
   );

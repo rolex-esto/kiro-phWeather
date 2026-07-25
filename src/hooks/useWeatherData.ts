@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { getCached, setCache } from './useWeatherCache';
 
 // Region center coordinates for Open-Meteo API queries
 const REGION_COORDS: Record<string, { lat: number; lon: number }> = {
@@ -75,6 +76,20 @@ export function useWeatherData(region: string) {
       return;
     }
 
+    // Check cache first
+    const cacheKey = `weather-${region}`;
+    const cached = getCached<{ hourly: HourlyData[]; daily: DailySummary[] }>(cacheKey);
+    if (cached) {
+      setState({
+        loading: false,
+        error: null,
+        hourly: cached.hourly,
+        daily: cached.daily,
+        lastUpdated: 'cached',
+      });
+      return;
+    }
+
     setState((prev) => ({ ...prev, loading: true, error: null }));
 
     try {
@@ -143,6 +158,9 @@ export function useWeatherData(region: string) {
         daily,
         lastUpdated: new Date().toLocaleString('en-PH', { timeZone: 'Asia/Manila' }),
       });
+
+      // Cache the result
+      setCache(cacheKey, { hourly, daily });
     } catch (err) {
       setState((prev) => ({
         ...prev,
