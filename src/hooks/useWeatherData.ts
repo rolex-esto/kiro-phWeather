@@ -60,7 +60,7 @@ function getIntensity(precipitation: number): string {
   return 'Torrential';
 }
 
-export function useWeatherData(region: string) {
+export function useWeatherData(region: string, cityCoords?: { lat: number; lon: number } | null) {
   const [state, setState] = useState<WeatherState>({
     loading: true,
     error: null,
@@ -70,14 +70,15 @@ export function useWeatherData(region: string) {
   });
 
   const fetchData = useCallback(async () => {
-    const coords = REGION_COORDS[region];
+    // Use city coordinates if provided, otherwise fall back to region center
+    const coords = cityCoords || REGION_COORDS[region];
     if (!coords) {
       setState((prev) => ({ ...prev, loading: false, error: 'Unknown region' }));
       return;
     }
 
     // Check cache first
-    const cacheKey = `weather-${region}`;
+    const cacheKey = `weather-${coords.lat}-${coords.lon}`;
     const cached = getCached<{ hourly: HourlyData[]; daily: DailySummary[] }>(cacheKey);
     if (cached) {
       setState({
@@ -168,7 +169,7 @@ export function useWeatherData(region: string) {
         error: err instanceof Error ? err.message : 'Failed to fetch weather data',
       }));
     }
-  }, [region]);
+  }, [region, cityCoords]);
 
   useEffect(() => {
     fetchData();

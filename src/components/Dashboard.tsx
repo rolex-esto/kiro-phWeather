@@ -12,9 +12,11 @@ import { SmartRecommendations } from './SmartRecommendations';
 import { DayCards } from './DayCards';
 import { HourlyTimeline } from './HourlyTimeline';
 import { TravelAdvice } from './TravelAdvice';
+import { CitySelector } from './CitySelector';
 import { StarButton } from './StarButton';
-import { CalendarIcon, ClockIcon, TrendingUpIcon, SunIcon, AlertCircleIcon } from './Icons';
+import { CalendarIcon, ClockIcon, TrendingUpIcon, SunIcon, AlertCircleIcon, MapPinIcon } from './Icons';
 import { getRegionLabel } from '../utils/regions';
+import { getCityCoords } from '../utils/cities';
 import './Dashboard.css';
 
 // Lazy load heavy chart components (Recharts is ~400KB)
@@ -30,16 +32,28 @@ const ALL_REGIONS = [
 
 export function Dashboard() {
   const [selectedRegion, setSelectedRegion] = useState('NCR');
+  const [selectedCity, setSelectedCity] = useState<string | null>(null);
   const [selectedDate, setSelectedDate] = useState(() => new Date().toISOString().split('T')[0]);
   const [compareMode, setCompareMode] = useState(false);
   const [compareRegion, setCompareRegion] = useState('Bicol');
   const { favorites, toggleFavorite, removeFavorite, isFavorite } = useFavorites();
   const { detecting, error: geoError, detect } = useGeolocation();
-  const { loading, error, hourly, daily, lastUpdated, refetch } = useWeatherData(selectedRegion);
+
+  // Get city coordinates if a city is selected, otherwise use region center
+  const cityCoords = selectedCity ? getCityCoords(selectedRegion, selectedCity) : null;
+  const { loading, error, hourly, daily, lastUpdated, refetch } = useWeatherData(selectedRegion, cityCoords);
+
+  function handleRegionSelect(region: string) {
+    setSelectedRegion(region);
+    setSelectedCity(null); // Reset city when region changes
+  }
 
   async function handleDetectLocation() {
     const region = await detect();
-    if (region) setSelectedRegion(region);
+    if (region) {
+      setSelectedRegion(region);
+      setSelectedCity(null);
+    }
   }
 
   if (loading) {
@@ -74,7 +88,7 @@ export function Dashboard() {
       <TyphoonBanner />
 
       <div className="dashboard-search">
-        <RegionSearch selected={selectedRegion} onSelect={setSelectedRegion} />
+        <RegionSearch selected={selectedRegion} onSelect={handleRegionSelect} />
         <LocationDetect detecting={detecting} onDetect={handleDetectLocation} error={geoError} />
       </div>
 
@@ -82,14 +96,14 @@ export function Dashboard() {
         <FavoriteRegions
           favorites={favorites}
           selected={selectedRegion}
-          onSelect={setSelectedRegion}
+          onSelect={handleRegionSelect}
           onRemove={removeFavorite}
         />
       )}
 
       <div className="dashboard-layout">
         <aside className="dashboard-sidebar">
-          <PhilippineMap selected={selectedRegion} onSelect={setSelectedRegion} />
+          <PhilippineMap selected={selectedRegion} onSelect={handleRegionSelect} />
         </aside>
 
         <section className="dashboard-content">
@@ -139,6 +153,22 @@ export function Dashboard() {
               </Suspense>
             </div>
           )}
+
+          {/* City selector */}
+          <div className="section-card">
+            <div className="section-header">
+              <MapPinIcon size={18} color="var(--accent)" />
+              <h2 className="section-title">
+                {selectedCity || getRegionLabel(selectedRegion)}
+              </h2>
+            </div>
+            <p className="section-desc">Select a specific city for more accurate forecast</p>
+            <CitySelector
+              region={selectedRegion}
+              selectedCity={selectedCity}
+              onSelectCity={setSelectedCity}
+            />
+          </div>
 
           {/* Travel advice */}
           <TravelAdvice hourly={todayHourly} region={selectedRegion} />
