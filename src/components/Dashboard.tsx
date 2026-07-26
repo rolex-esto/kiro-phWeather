@@ -41,10 +41,10 @@ export function Dashboard() {
   }
 
   async function handleDetectLocation() {
-    const region = await detect();
-    if (region) {
-      setSelectedRegion(region);
-      setSelectedCity(null);
+    const result = await detect();
+    if (result) {
+      setSelectedRegion(result.region);
+      setSelectedCity(result.city);
     }
   }
 

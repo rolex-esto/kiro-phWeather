@@ -1,26 +1,7 @@
 import { useState, useCallback } from 'react';
+import { REGION_CITIES } from '../utils/cities';
 
-// Map coordinates to nearest Philippine region
-const REGION_CENTERS: Array<{ id: string; lat: number; lon: number }> = [
-  { id: 'NCR', lat: 14.5995, lon: 120.9842 },
-  { id: 'CAR', lat: 16.4023, lon: 120.596 },
-  { id: 'Ilocos', lat: 17.5747, lon: 120.3869 },
-  { id: 'Cagayan Valley', lat: 17.6132, lon: 121.727 },
-  { id: 'Central Luzon', lat: 15.145, lon: 120.5887 },
-  { id: 'CALABARZON', lat: 14.1, lon: 121.3 },
-  { id: 'MIMAROPA', lat: 9.7392, lon: 118.7353 },
-  { id: 'Bicol', lat: 13.1391, lon: 123.7438 },
-  { id: 'Western Visayas', lat: 10.7202, lon: 122.5621 },
-  { id: 'Central Visayas', lat: 10.3157, lon: 123.8854 },
-  { id: 'Eastern Visayas', lat: 11.25, lon: 125.0 },
-  { id: 'Zamboanga Peninsula', lat: 6.9214, lon: 122.079 },
-  { id: 'Northern Mindanao', lat: 8.4542, lon: 124.6319 },
-  { id: 'Davao', lat: 7.1907, lon: 125.4553 },
-  { id: 'SOCCSKSARGEN', lat: 6.5, lon: 124.85 },
-  { id: 'Caraga', lat: 8.9475, lon: 125.5406 },
-  { id: 'BARMM', lat: 7.2, lon: 124.23 },
-];
-
+// Haversine formula to find distance between two points
 function haversineDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
   const R = 6371;
   const dLat = ((lat2 - lat1) * Math.PI) / 180;
@@ -32,57 +13,69 @@ function haversineDistance(lat1: number, lon1: number, lat2: number, lon2: numbe
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 }
 
-function findNearestRegion(lat: number, lon: number): string {
-  let nearest = 'NCR';
+// Find the nearest region AND city from GPS coordinates
+function findNearestLocation(lat: number, lon: number): { region: string; city: string } {
+  let nearestRegion = 'NCR';
+  let nearestCity = 'Manila';
   let minDist = Infinity;
-  for (const region of REGION_CENTERS) {
-    const dist = haversineDistance(lat, lon, region.lat, region.lon);
-    if (dist < minDist) {
-      minDist = dist;
-      nearest = region.id;
+
+  for (const [regionId, cities] of Object.entries(REGION_CITIES)) {
+    for (const city of cities) {
+      const dist = haversineDistance(lat, lon, city.lat, city.lon);
+      if (dist < minDist) {
+        minDist = dist;
+        nearestRegion = regionId;
+        nearestCity = city.name;
+      }
     }
   }
-  return nearest;
+
+  return { region: nearestRegion, city: nearestCity };
+}
+
+interface GeolocationResult {
+  region: string;
+  city: string;
 }
 
 interface GeolocationState {
   detecting: boolean;
   error: string | null;
-  detectedRegion: string | null;
+  detected: GeolocationResult | null;
 }
 
 export function useGeolocation() {
   const [state, setState] = useState<GeolocationState>({
     detecting: false,
     error: null,
-    detectedRegion: null,
+    detected: null,
   });
 
-  const detect = useCallback((): Promise<string | null> => {
+  const detect = useCallback((): Promise<GeolocationResult | null> => {
     return new Promise((resolve) => {
       if (!navigator.geolocation) {
-        setState({ detecting: false, error: 'Geolocation not supported', detectedRegion: null });
+        setState({ detecting: false, error: 'Geolocation not supported', detected: null });
         resolve(null);
         return;
       }
 
-      setState({ detecting: true, error: null, detectedRegion: null });
+      setState({ detecting: true, error: null, detected: null });
 
       navigator.geolocation.getCurrentPosition(
         (position) => {
-          const region = findNearestRegion(position.coords.latitude, position.coords.longitude);
-          setState({ detecting: false, error: null, detectedRegion: region });
-          resolve(region);
+          const result = findNearestLocation(position.coords.latitude, position.coords.longitude);
+          setState({ detecting: false, error: null, detected: result });
+          resolve(result);
         },
         (err) => {
           let errorMsg = 'Could not detect location';
           if (err.code === 1) errorMsg = 'Location access denied';
           if (err.code === 2) errorMsg = 'Location unavailable';
           if (err.code === 3) errorMsg = 'Location request timed out';
-          setState({ detecting: false, error: errorMsg, detectedRegion: null });
+          setState({ detecting: false, error: errorMsg, detected: null });
           resolve(null);
         },
-        { enableHighAccuracy: false, timeout: 8000, maximumAge: 300000 }
+        { enableHighAccuracy: true, timeout: 10000, maximumAge: 300000 }
       );
     });
   }, []);
