@@ -35,9 +35,9 @@ export function Dashboard() {
   const cityCoords = selectedCity ? getCityCoords(selectedRegion, selectedCity) : null;
   const { loading, error, hourly, daily, lastUpdated, refetch } = useWeatherData(selectedRegion, cityCoords);
 
-  function handleRegionSelect(region: string) {
+  function handleRegionSelect(region: string, city?: string) {
     setSelectedRegion(region);
-    setSelectedCity(null); // Reset city when region changes
+    setSelectedCity(city || null);
   }
 
   async function handleDetectLocation() {
