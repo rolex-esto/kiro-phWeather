@@ -23,19 +23,11 @@ import './Dashboard.css';
 const RainChart = lazy(() => import('./RainChart').then((m) => ({ default: m.RainChart })));
 const CompareRegions = lazy(() => import('./CompareRegions').then((m) => ({ default: m.CompareRegions })));
 
-const ALL_REGIONS = [
-  'NCR', 'CAR', 'Ilocos', 'Cagayan Valley', 'Central Luzon',
-  'CALABARZON', 'MIMAROPA', 'Bicol', 'Western Visayas',
-  'Central Visayas', 'Eastern Visayas', 'Zamboanga Peninsula',
-  'Northern Mindanao', 'Davao', 'SOCCSKSARGEN', 'Caraga', 'BARMM',
-];
-
 export function Dashboard() {
   const [selectedRegion, setSelectedRegion] = useState('NCR');
   const [selectedCity, setSelectedCity] = useState<string | null>(null);
   const [selectedDate, setSelectedDate] = useState(() => new Date().toISOString().split('T')[0]);
   const [compareMode, setCompareMode] = useState(false);
-  const [compareRegion, setCompareRegion] = useState('Bicol');
   const { favorites, toggleFavorite, removeFavorite, isFavorite } = useFavorites();
   const { detecting, error: geoError, detect } = useGeolocation();
 
@@ -161,28 +153,12 @@ export function Dashboard() {
 
           {/* Compare mode */}
           {compareMode && (
-            <div className="compare-section">
-              <div className="compare-selector">
-                <span className="compare-label">Compare with:</span>
-                <select
-                  value={compareRegion}
-                  onChange={(e) => setCompareRegion(e.target.value)}
-                  className="compare-select"
-                >
-                  {ALL_REGIONS.filter((r) => r !== selectedRegion).map((r) => (
-                    <option key={r} value={r}>{r}</option>
-                  ))}
-                </select>
-              </div>
-              <Suspense fallback={<p className="lazy-loading">Loading comparison...</p>}>
-                <CompareRegions
-                  regionA={selectedRegion}
-                  regionB={compareRegion}
-                  date={selectedDate}
-                  onClose={() => setCompareMode(false)}
-                />
-              </Suspense>
-            </div>
+            <Suspense fallback={<p className="lazy-loading">Loading comparison...</p>}>
+              <CompareRegions
+                date={selectedDate}
+                onClose={() => setCompareMode(false)}
+              />
+            </Suspense>
           )}
 
           {/* City selector */}
