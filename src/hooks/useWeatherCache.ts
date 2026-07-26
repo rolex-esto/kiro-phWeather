@@ -1,7 +1,7 @@
-// Simple cache for API responses to avoid refetching the same region data
-// Cache expires after 30 minutes (weather updates hourly anyway)
+// Cache for API responses - prevents hitting rate limits
+// Cache expires after 60 minutes (Open-Meteo updates hourly anyway)
 
-const CACHE_DURATION = 30 * 60 * 1000; // 30 minutes
+const CACHE_DURATION = 60 * 60 * 1000; // 60 minutes
 
 interface CacheEntry {
   data: unknown;

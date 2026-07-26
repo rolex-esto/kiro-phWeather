@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { CloudRainIcon, ThermometerIcon, DropletIcon, WindIcon, CheckCircleIcon, HandshakeIcon } from './Icons';
 import { REGIONS, getRegionNumber } from '../utils/regions';
 import { REGION_CITIES } from '../utils/cities';
@@ -19,10 +19,21 @@ interface Props {
 
 async function fetchLocationDay(lat: number, lon: number, label: string, date: string): Promise<LocationStats | null> {
   try {
-    const res = await fetch(
-      `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&hourly=temperature_2m,precipitation,precipitation_probability,wind_speed_10m&timezone=Asia/Manila&start_date=${date}&end_date=${date}`
-    );
-    const data = await res.json();
+    const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&hourly=temperature_2m,precipitation,precipitation_probability,wind_speed_10m&timezone=Asia/Manila&start_date=${date}&end_date=${date}`;
+
+    // Retry on 429
+    let response: Response | null = null;
+    for (let attempt = 0; attempt < 3; attempt++) {
+      response = await fetch(url);
+      if (response.ok) break;
+      if (response.status === 429 && attempt < 2) {
+        await new Promise((r) => setTimeout(r, 2000 * Math.pow(2, attempt)));
+        continue;
+      }
+    }
+    if (!response || !response.ok) return null;
+
+    const data = await response.json();
     const probs: number[] = data.hourly.precipitation_probability;
     const rains: number[] = data.hourly.precipitation;
     const temps: number[] = data.hourly.temperature_2m;
@@ -82,11 +93,6 @@ export function CompareRegions({ date, onClose }: Props) {
       setLoading(false);
     });
   }
-
-  // Auto-compare on first render
-  useEffect(() => {
-    handleCompare();
-  }, []);
 
   return (
     <div className="compare-container">

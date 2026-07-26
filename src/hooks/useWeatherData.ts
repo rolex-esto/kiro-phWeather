@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { getCached, setCache } from './useWeatherCache';
 
 // Region center coordinates for Open-Meteo API queries
@@ -52,12 +52,23 @@ export interface WeatherState {
   lastUpdated: string | null;
 }
 
-function getIntensity(precipitation: number): string {
-  if (precipitation <= 0) return 'None';
-  if (precipitation <= 2.5) return 'Light';
-  if (precipitation <= 7.5) return 'Moderate';
-  if (precipitation <= 15) return 'Heavy';
-  return 'Torrential';
+// Fetch with retry on 429 (rate limit)
+async function fetchWithRetry(url: string, retries = 3): Promise<Response> {
+  for (let attempt = 0; attempt < retries; attempt++) {
+    const response = await fetch(url);
+    if (response.ok) return response;
+    if (response.status === 429 && attempt < retries - 1) {
+      // Wait before retry: 2s, 4s, 8s
+      await new Promise((r) => setTimeout(r, 2000 * Math.pow(2, attempt)));
+      continue;
+    }
+    throw new Error(
+      response.status === 429
+        ? 'Weather service is busy. Please wait a moment and try again.'
+        : `Weather API error: ${response.status}`
+    );
+  }
+  throw new Error('Failed after retries');
 }
 
 export function useWeatherData(region: string, cityCoords?: { lat: number; lon: number } | null) {
@@ -69,15 +80,17 @@ export function useWeatherData(region: string, cityCoords?: { lat: number; lon: 
     lastUpdated: null,
   });
 
+  // Debounce: wait 300ms before fetching to avoid rapid-fire calls
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
   const fetchData = useCallback(async () => {
-    // Use city coordinates if provided, otherwise fall back to region center
     const coords = cityCoords || REGION_COORDS[region];
     if (!coords) {
       setState((prev) => ({ ...prev, loading: false, error: 'Unknown region' }));
       return;
     }
 
-    // Check cache first
+    // Check cache first (60 min TTL)
     const cacheKey = `weather-${coords.lat}-${coords.lon}`;
     const cached = getCached<{ hourly: HourlyData[]; daily: DailySummary[] }>(cacheKey);
     if (cached) {
@@ -96,11 +109,7 @@ export function useWeatherData(region: string, cityCoords?: { lat: number; lon: 
     try {
       const url = `https://api.open-meteo.com/v1/forecast?latitude=${coords.lat}&longitude=${coords.lon}&hourly=temperature_2m,relative_humidity_2m,precipitation,precipitation_probability,wind_speed_10m,weather_code&timezone=Asia/Manila&forecast_days=7`;
 
-      const response = await fetch(url);
-      if (!response.ok) {
-        throw new Error(`Weather API error: ${response.status}`);
-      }
-
+      const response = await fetchWithRetry(url);
       const data = await response.json();
       const hourly: HourlyData[] = [];
       const dailyMap: Map<string, {
@@ -128,7 +137,6 @@ export function useWeatherData(region: string, cityCoords?: { lat: number; lon: 
 
         hourly.push(entry);
 
-        // Accumulate daily stats
         if (!dailyMap.has(date)) {
           dailyMap.set(date, { probs: [], rains: [], temps: [] });
         }
@@ -138,7 +146,6 @@ export function useWeatherData(region: string, cityCoords?: { lat: number; lon: 
         day.temps.push(entry.temperature);
       }
 
-      // Build daily summaries
       const daily: DailySummary[] = [];
       for (const [date, stats] of dailyMap.entries()) {
         daily.push({
@@ -160,7 +167,7 @@ export function useWeatherData(region: string, cityCoords?: { lat: number; lon: 
         lastUpdated: new Date().toLocaleString('en-PH', { timeZone: 'Asia/Manila' }),
       });
 
-      // Cache the result
+      // Cache for 60 minutes
       setCache(cacheKey, { hourly, daily });
     } catch (err) {
       setState((prev) => ({
@@ -172,8 +179,18 @@ export function useWeatherData(region: string, cityCoords?: { lat: number; lon: 
   }, [region, cityCoords]);
 
   useEffect(() => {
-    fetchData();
+    // Debounce: cancel previous timer, wait 300ms before fetching
+    if (debounceRef.current) {
+      clearTimeout(debounceRef.current);
+    }
+    debounceRef.current = setTimeout(() => {
+      fetchData();
+    }, 300);
+
+    return () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+    };
   }, [fetchData]);
 
-  return { ...state, refetch: fetchData, getIntensity };
+  return { ...state, refetch: fetchData };
 }
