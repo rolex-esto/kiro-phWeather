@@ -10,7 +10,7 @@ export interface CityInfo {
 export const REGION_CITIES: Record<string, CityInfo[]> = {
   'NCR': [
     { name: 'Manila', lat: 14.5995, lon: 120.9842 },
-    { name: 'Quezon City', lat: 14.6760, lon: 121.0437 },
+    { name: 'Quezon City', lat: 14.6320, lon: 121.0300 },
     { name: 'Makati', lat: 14.5547, lon: 121.0244 },
     { name: 'Pasig', lat: 14.5764, lon: 121.0851 },
     { name: 'Taguig', lat: 14.5176, lon: 121.0509 },
@@ -19,7 +19,7 @@ export const REGION_CITIES: Record<string, CityInfo[]> = {
     { name: 'Paranaque', lat: 14.4793, lon: 121.0198 },
     { name: 'Las Pinas', lat: 14.4445, lon: 120.9939 },
     { name: 'Muntinlupa', lat: 14.4081, lon: 121.0415 },
-    { name: 'Marikina', lat: 14.6507, lon: 121.1029 },
+    { name: 'Marikina', lat: 14.6507, lon: 121.1120 },
     { name: 'Caloocan', lat: 14.6488, lon: 120.9840 },
     { name: 'Valenzuela', lat: 14.6942, lon: 120.9608 },
     { name: 'Navotas', lat: 14.6667, lon: 120.9417 },
