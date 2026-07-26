@@ -58,20 +58,51 @@ export function Dashboard() {
 
   if (loading) {
     return (
-      <div className="loading-state">
-        <div className="spinner" aria-label="Loading" />
-        <p>Fetching live weather data...</p>
-        <span className="loading-sub">Getting forecast from Open-Meteo</span>
+      <div className="dashboard">
+        <TyphoonBanner />
+        <div className="dashboard-search">
+          <RegionSearch selected={selectedRegion} onSelect={handleRegionSelect} />
+          <LocationDetect detecting={detecting} onDetect={handleDetectLocation} error={geoError} />
+        </div>
+        {favorites.length > 0 && (
+          <FavoriteRegions favorites={favorites} selected={selectedRegion} onSelect={handleRegionSelect} onRemove={removeFavorite} />
+        )}
+        <div className="dashboard-layout">
+          <aside className="dashboard-sidebar">
+            <PhilippineMap selected={selectedRegion} onSelect={handleRegionSelect} />
+          </aside>
+          <section className="dashboard-content">
+            <div className="loading-state">
+              <div className="spinner" aria-label="Loading" />
+              <p>Fetching live weather data...</p>
+              <span className="loading-sub">Getting forecast from Open-Meteo</span>
+            </div>
+          </section>
+        </div>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="error-state">
-        <p>Could not load weather data</p>
-        <span className="error-detail">{error}</span>
-        <button className="retry-btn" onClick={refetch}>Try Again</button>
+      <div className="dashboard">
+        <TyphoonBanner />
+        <div className="dashboard-search">
+          <RegionSearch selected={selectedRegion} onSelect={handleRegionSelect} />
+          <LocationDetect detecting={detecting} onDetect={handleDetectLocation} error={geoError} />
+        </div>
+        <div className="dashboard-layout">
+          <aside className="dashboard-sidebar">
+            <PhilippineMap selected={selectedRegion} onSelect={handleRegionSelect} />
+          </aside>
+          <section className="dashboard-content">
+            <div className="error-state">
+              <p>Could not load weather data</p>
+              <span className="error-detail">{error}</span>
+              <button className="retry-btn" onClick={refetch}>Try Again</button>
+            </div>
+          </section>
+        </div>
       </div>
     );
   }

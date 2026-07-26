@@ -101,14 +101,24 @@ function geometryToPath(geometry: GeoFeature['geometry']): string {
   return '';
 }
 
+// Cache GeoJSON globally so it never refetches
+let geoCache: GeoJSON | null = null;
+
 export function PhilippineMap({ selected, onSelect }: Props) {
-  const [geoData, setGeoData] = useState<GeoJSON | null>(null);
+  const [geoData, setGeoData] = useState<GeoJSON | null>(geoCache);
   const [hoveredRegion, setHoveredRegion] = useState<string | null>(null);
 
   useEffect(() => {
+    if (geoCache) {
+      setGeoData(geoCache);
+      return;
+    }
     fetch('/data/ph-regions.json')
       .then((res) => res.json())
-      .then((data) => setGeoData(data))
+      .then((data) => {
+        geoCache = data;
+        setGeoData(data);
+      })
       .catch((err) => console.error('Failed to load map:', err));
   }, []);
 
