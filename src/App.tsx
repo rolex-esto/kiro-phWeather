@@ -3,6 +3,7 @@ import { useDarkMode } from './hooks/useDarkMode';
 import { Dashboard } from './components/Dashboard';
 import { DarkModeToggle } from './components/DarkModeToggle';
 import { CloudRainIcon } from './components/Icons';
+import { Analytics } from '@vercel/analytics/react';
 
 function App() {
   const { isDark, toggle } = useDarkMode();
@@ -58,6 +59,7 @@ function App() {
           </div>
         </div>
       </footer>
+      <Analytics />
     </div>
   );
 }
